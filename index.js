@@ -142,7 +142,7 @@ class EventEmitter {
 
 export default class Giiker extends EventEmitter {
 
-    // Initialize default values
+    // This constructor needs a Device object from 'react-native-ble-plx' package
     constructor(device) {
         super();
 
