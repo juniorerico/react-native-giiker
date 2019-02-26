@@ -1,15 +1,12 @@
 {
-  "name": "reactnativegiiker",
-  "version": "0.0.1",
-  "private": true,
-  "scripts": {
-    "start": "node node_modules/react-native/local-cli/cli.js start",
-    "test": "jest"
-  },
+  "name": "react-native-giiker",
+  "description": "React Native bluetooth interface to connect to Xiaomi Giiker Cube.",
+  "author": "Érico Júnior <junior_erico@hotmail.com>",
+  "version": "1.0.1",
+  "main": "index.js",
+  "scripts": {},
   "dependencies": {
     "base64-arraybuffer": "^0.1.5",
-    "react": "16.6.3",
-    "react-native": "0.58.5",
     "react-native-ble-plx": "^1.0.3"
   },
   "devDependencies": {
@@ -21,5 +18,23 @@
   },
   "jest": {
     "preset": "react-native"
-  }
+  },
+  "license": "MTI",
+  "bugs": {
+    "url": "https://github.com/juniorerico/react-native-giiker/issues"
+  },
+  "homepage": "https://github.com/juniorerico/react-native-giiker",
+  "keywords": [
+    "react",
+    "react-native",
+    "react-component",
+    "giiker",
+    "magic",
+    "cube",
+    "rubiks",
+    "ios",
+    "android",
+    "bluetooth",
+    "ble"
+  ]
 }

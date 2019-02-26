@@ -147,6 +147,7 @@ export default class Giiker extends EventEmitter {
         super();
 
         this._isConnected = false;
+        this._cubeReseted = false;
         this._state = {};
         this._device = device;
         this._services = [];
@@ -164,8 +165,7 @@ export default class Giiker extends EventEmitter {
     // Connect to the device
     async connect() {
         this._device.connect().then((device) => {
-            this.emit("connected");
-            return device.discoverAllServicesAndCharacteristics()
+            return device.discoverAllServicesAndCharacteristics();
         }).then((device) => {
             this._device = device;
             this._setup();
@@ -214,22 +214,27 @@ export default class Giiker extends EventEmitter {
         // handle moves on the cube
         this._cubeStateCharacteristic.monitor((error, characteristic) => {
             // Handle possible errors
-            if (error) {
-                console.log(error);
-                return
-            }
+            if (error) return;
 
             // Verify if the 'fake move event' was triggered. If true, skip it
             if (this._firstStateFlag && valuedCharacteristic.value == characteristic.value) {
                 this._firstStateFlag = false;
                 return;
-            } else {
-                this._firstStateFlag = false;
             }
 
             const { state, moves } = this._parseCubeValue(new DataView(Base64.decode(characteristic.value)));
             this._state = state;
-            this.emit('move', moves[0]);
+
+            // After reset cube to solved, a move event is triggered by giiker
+            // This prevent emit 'move' event to listeners
+            if (this._cubeReseted) {
+                this.emit('update state');
+            } else {
+                this.emit('move', moves[0]);
+            }
+
+            this._cubeReseted = false;
+            this._firstStateFlag = false;
         });
 
         // handle disconnection
@@ -238,63 +243,97 @@ export default class Giiker extends EventEmitter {
         });
 
         this.connected = true;
+        this.emit("connected");
     }
 
     /**
-     * Returns a promise that will resolve to the current battery level as percentage and the charging status
+     * Returns a promise that will resolve to the current battery level as percentage and the charging status, it will 
+     * also emit an event containing the data.
      * 
-     * Note: Sometimes the cube returns value '184' in the first index (0) and the index 1 contains values 
-     *       such as '160' or '161'. I don't know why it happens and what it means.
-     *        
-     *       When first index (0) return value '181' then the index 1 contains the right battery level.
-     *       Maybe this should be filtered to avoid mistakes.
+     * If stopMonitor param given was false, it will continue listening the characteristic for new updates
+     * 
+     * In order to stop monitoring, just call stopBatteryMonitor function
      */
-    async getBatteryLevel() {
+    async getBatteryLevel(stopMonitor = true) {
         const readCharacteristic = this._infoServiceCharacteristics.find(char => char.uuid == CUBE_INFO_RESPONSE);
         const writeCharacteristic = this._infoServiceCharacteristics.find(char => char.uuid == CUBE_INFO_REQUEST);
 
         writeCharacteristic.writeWithoutResponse(Base64.encode(new Uint8Array([WRITE_BATTERY])));
 
         return new Promise((resolve) => {
-            const subscrition = readCharacteristic.monitor((error, characteristic) => {
+            this._batteryMonitor = readCharacteristic.monitor((error, characteristic) => {
+                // Handle possible errors
+                if (error) return;
+
                 const value = new DataView(Base64.decode(characteristic.value));
 
-                const batteryLevel = value.getUint8(1);
-                const chargingState = batteryStates.find((state) => state.code == value.getUint8(2));
+                // Verify if the characteristic returned the BATTERY INFO. It's necessary, because the 
+                // same characterisct may return different information, like battery, move count, ...
+                if (value.getUint8(0) == WRITE_BATTERY) {
+                    const batteryLevel = value.getUint8(1);
+                    const chargingState = batteryStates.find((state) => state.code == value.getUint8(2));
 
-                resolve({ batteryLevel, chargingState });
+                    this.emit('battery', { batteryLevel, chargingState });
+                    resolve({ batteryLevel, chargingState });
 
-                subscrition.remove();
-            });
+                    if (stopMonitor)
+                        this.stopBatteryMonitor();
+                }
+            }, 'MONITOR_BATTERY');
         });
     }
 
     /**
-     * Returns a promise that will resolve to the total number of moves performed with this cube
+     * Returns a promise that will resolve to the total number of moves performed with this cube, it will also emit an 
+     * event containing the data.
+     * 
+     * If stopMonitor param given was false, it will continue listening the characteristic for new updates
+     * 
+     * In order to stop monitoring, just call stopMoveCountMonitor function
      */
-    async getMoveCount() {
+    async getMoveCount(stopMonitor = true) {
         const readCharacteristic = this._infoServiceCharacteristics.find(char => char.uuid == CUBE_INFO_RESPONSE);
         const writeCharacteristic = this._infoServiceCharacteristics.find(char => char.uuid == CUBE_INFO_REQUEST);
 
         writeCharacteristic.writeWithoutResponse(Base64.encode(new Uint8Array([WRITE_MOVE_COUNT])));
 
         return new Promise((resolve) => {
-            const subscrition = readCharacteristic.monitor((error, characteristic) => {
-                console.log("teste");
+            this._moveCountMonitor = readCharacteristic.monitor((error, characteristic) => {
+                // Handle possible errors
+                if (error) return;
 
                 const value = new DataView(Base64.decode(characteristic.value));
 
-                const moveCount = value.getUint8(4) +
-                    (256 * value.getUint8(3)) +
-                    (65536 * value.getUint8(2)) +
-                    (16777216 * (value.getUint8(1)));
+                // Verify if the characteristic returned the MOVE COUNT. It's necessary, because the 
+                // same characterisct may return different information, like battery, move count, ...
+                if (value.getUint8(0) == WRITE_MOVE_COUNT) {
+                    const moveCount = value.getUint8(4) +
+                        (256 * value.getUint8(3)) +
+                        (65536 * value.getUint8(2)) +
+                        (16777216 * (value.getUint8(1)));
 
-                console.log(moveCount);
+                    resolve(moveCount);
+                    this.emit('move count', moveCount);
 
-                resolve(moveCount);
-                subscrition.remove();
-            });
+                    if (stopMonitor)
+                        this.stopMoveCountMonitor();
+                }
+            }, 'MONITOR_MOVE_COUNT');
         });
+    }
+
+    /**
+     * Stop monitoring battery
+     */
+    stopBatteryMonitor() {
+        this._batteryMonitor.remove();
+    }
+
+    /**
+     * Stop monitoring move count
+     */
+    stopMoveCountMonitor() {
+        this._moveCountMonitor.remove();
     }
 
     /**
@@ -311,6 +350,8 @@ export default class Giiker extends EventEmitter {
         const writeCharacteristic = this._infoServiceCharacteristics.find(char => char.uuid == CUBE_INFO_REQUEST);
 
         await writeCharacteristic.writeWithoutResponse(Base64.encode(new Uint8Array([WRITE_RESET_SOLVED])));
+
+        this._cubeReseted = true;
     }
 
     _parseCubeValue(value) {
