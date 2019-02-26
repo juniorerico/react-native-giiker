@@ -4540,6 +4540,14 @@ react-native-ble-plx@^1.0.3:
   resolved "https://registry.yarnpkg.com/react-native-ble-plx/-/react-native-ble-plx-1.0.3.tgz#d5068f633522c2420b5e095d4c67286c31515c84"
   integrity sha512-JOagdLCjT9GrD3yT3kV0Ib2+tBl+IqQ4r7alXQdZoKLdT0Ceb1UaevSmM4S6eSE6XI2DOdpOEDqUGubmysPVyA==
 
+react-native-giiker@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-giiker/-/react-native-giiker-1.0.1.tgz#7e6bdeda61365724af8104c2281fc0de13d72460"
+  integrity sha512-G/5p4JFAT+Djzy04sIx7Nie9boUnD0BkjrI/cb99yzJvquTQGmE8Umc9z85IDuuNnY3Hr5YyDl/TqSSJuXX4lg==
+  dependencies:
+    base64-arraybuffer "^0.1.5"
+    react-native-ble-plx "^1.0.3"
+
 react-native@0.58.5:
   version "0.58.5"
   resolved "https://registry.yarnpkg.com/react-native/-/react-native-0.58.5.tgz#672709bafd845e35ab4dd32b8ccccae32d54d552"

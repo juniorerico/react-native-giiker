@@ -10,7 +10,8 @@
     "base64-arraybuffer": "^0.1.5",
     "react": "16.6.3",
     "react-native": "0.58.5",
-    "react-native-ble-plx": "^1.0.3"
+    "react-native-ble-plx": "^1.0.3",
+    "react-native-giiker": "^1.0.1"
   },
   "devDependencies": {
     "babel-core": "7.0.0-bridge.0",
