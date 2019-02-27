@@ -4,21 +4,16 @@ React Native Bluetooth package to connect to Xiaomi Giiker Cube. Tested in andro
 
 ## Getting Started
 This package depends on the React Native BLE Library ([react-native-ble-plx](https://github.com/Polidea/react-native-ble-plx)) that provides interface to scan, read/write data to devices, monitor characteristics and more.
-
-All features in this package were based on other Giiker related projects around the github. Many thanks to the contributors, specially the ones below:
-- giiker <[hakatashi/giiker](https://github.com/hakatashi/giiker)> and <[Scarygami/giiker](https://github.com/Scarygami/giiker)> 
-- SuperCube-API <[Vexu/SuperCube-API](https://github.com/Vexu/SuperCube-API)> 
-
  
 
 [![npm version](https://img.shields.io/npm/v/react-native-giiker.svg?style=flat-square)](https://www.npmjs.com/package/react-native-giiker)
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [Examples](#examples)
-- [Props](#props)
+- [Giiker Events](#giiker-events)
 - [Demo](#demo)
 - [Credits](#credits)
+
 
 ### Installation
 First, read React Native BLE Library ([react-native-ble-plx](https://github.com/Polidea/react-native-ble-plx)) installation guide, then run one of these commands:
@@ -116,7 +111,7 @@ scanAndConnect() {
 ```  
 
 ### Giiker Events
-The Giiker object use events to notify listeners about cube state, moves and battery. Check below the events and how they work:
+Giiker object uses events to notify listeners about the cube state, moves and battery. Check the events below and how they work:
 
 - **connected**  
 This event is triggered just after Giiker beein properly connected.
@@ -198,3 +193,20 @@ this.giiker.on("update state", () => {
     console.log(this.giiker.stateString);
 });
 ```
+
+### Demo
+* `git clone https://github.com/juniorerico/react-native-giiker`
+* `cd react-native-giiker/examples/RNGiikerDemo`
+* `yarn install`
+* **Android**
+	* Run android simulator / plug in your android device
+	* Run `react-native run-android` in terminal
+
+## Credits
+
+All features in this package were based on other Giiker related projects around the github. Many thanks to the creators/contributors, specially the ones below:
+* giiker <[hakatashi/giiker](https://github.com/hakatashi/giiker)> and <[Scarygami/giiker](https://github.com/Scarygami/giiker)> 
+* SuperCube-API <[Vexu/SuperCube-API](https://github.com/Vexu/SuperCube-API)> 
+
+This package also uses the **base64-arraybuffer** package to converts data:
+* base64-arraybuffer <[niklasvh/base64-arraybuffer](https://github.com/niklasvh/base64-arraybuffer)> 
