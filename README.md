@@ -204,7 +204,7 @@ this.giiker.on("update state", () => {
 
 ## Credits
 
-All features in this package were based on other Giiker related projects around the github. Many thanks to the creators/contributors, specially the ones below:
+All features in this package were adapted and inspired from other Giiker related projects around the github. Many thanks to the creators/contributors, specially the ones below:
 * giiker <[hakatashi/giiker](https://github.com/hakatashi/giiker)> and <[Scarygami/giiker](https://github.com/Scarygami/giiker)> 
 * SuperCube-API <[Vexu/SuperCube-API](https://github.com/Vexu/SuperCube-API)> 
 
