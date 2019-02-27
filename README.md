@@ -28,20 +28,22 @@ or
 `yarn add react-native-giiker`
 
 ### Usage
+
+First, we need to import BleManager from 'react-native-ble-plx' and Giiker from 'react-native-giiker':
+
 ```javascript
-import React, { Component } from 'react';
-import { View, Text, StyleSheet, PermissionsAndroid } from 'react-native';
 import { BleManager } from 'react-native-ble-plx';
 import Giiker from 'react-native-giiker';
+````
 
+Then, we have to initialize BleManager and check if the app has Bluetooth Low Energy permission. We can do that in the component/class constructor using the code below, provided by React Native BLE Library ([react-native-ble-plx](https://github.com/Polidea/react-native-ble-plx)):
+
+```javascript
 export default class Application extends Component {
-  state = {
-    bluetoothState: "Unknown",
-    giikerState: "Disconnected"
-  }
 
   constructor(props) {
     super();
+
     this.manager = new BleManager();
     this.checkBlePermission();
   }
@@ -49,8 +51,6 @@ export default class Application extends Component {
   componentWillMount() {
     // Monitor bluetooth state change
     this.manager.onStateChange((state) => {
-      this.setState({ bluetoothState: state });
-
       if (state == "PoweredOn") {
         this.scanAndConnect();
       }
@@ -70,72 +70,131 @@ export default class Application extends Component {
       console.warn(err)
     }
   }
+```
 
-  scanAndConnect() {
-    this.setState({ giikerState: "Searching..." });
+Now the app has BLE permission, we are able to scan and connect to Giiker device: 
 
+```javascript
+scanAndConnect() {
     this.manager.startDeviceScan(null, null, async (error, device) => {
-      // Handle error (scanning will be stopped automatically)
-      if (error)
-        return;
-        
-      if (device.name != null) {
-        // Connect to first device found
-        if (device.name.match("^(GiC|GiS)")) {
-          console.log(device);
-          this.setState({ giikerState: "Connecting..." });
+        // Handle error (scanning will be stopped automatically)
+        if (error)
+            return;
 
-          this.manager.stopDeviceScan();
-          this.giiker = new Giiker(device);
+        if (device.name != null) {
+            // Connect to first device found
+            if (device.name.match("^(GiC|GiS)")) {
+                this.manager.stopDeviceScan();
+                this.giiker = new Giiker(device);
 
-          await this.giiker.connect();
+                await this.giiker.connect();
 
-          // Events
-          this.giiker.on("connected", () => {
-            this.setState({ giikerState: "Connected" });
-
-            this.giiker.getBatteryLevel(false);
-            this.giiker.getMoveCount(false);
-          });
-          this.giiker.on("disconnected", () => {
-            this.setState({ giikerState: "Disconnected" });
-          });
-          this.giiker.on("move", (move) => {
-            console.log(move);
-          });
-          this.giiker.on("battery", (battery) => {
-            console.log(battery);
-          });
-          this.giiker.on("move count", (count) => {
-            console.log(count);
-          });
-          this.giiker.on("update state", () => {
-            console.log(this.giiker.stateString);
-          });
+                // Events
+                this.giiker.on("connected", () => {
+                    this.giiker.getBatteryLevel(false);
+                    this.giiker.getMoveCount(false);
+                });
+                this.giiker.on("disconnected", () => {
+                    console.log("Giiker disconnected!");
+                });
+                this.giiker.on("move", (move) => {
+                    console.log(move);
+                });
+                this.giiker.on("battery", (battery) => {
+                    console.log(battery);
+                });
+                this.giiker.on("move count", (count) => {
+                    console.log(count);
+                });
+                this.giiker.on("update state", () => {
+                    console.log(this.giiker.stateString);
+                });
+            }
         }
-      }
-
     });
-  }
-
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text style={{ fontSize: 20 }}>React Native Giiker</Text>
-        <Text>Bluetooth State: {this.state.bluetoothState}</Text>
-        <Text>Giiker State: {this.state.giikerState}</Text>
-      </View>
-    );
-  }
 }
+```  
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF'
-  }
+### Giiker Events
+The Giiker object use events to notify listeners about cube state, moves and battery. Check below the events and how they work:
+
+- **connected**  
+This event is triggered just after Giiker beein properly connected.
+
+```javascript
+this.giiker.on("connected", () => {
+    console.log("Giiker has connected!");
 });
 ```
-In Progress...
+
+- **disconnected**  
+This event is triggered just after Giiker disconnect.
+
+```javascript
+this.giiker.on("disconnected", () => {
+    console.log("Giiker disconnected!");
+});
+```
+
+- **move**  
+This event is triggered when you turn the cube. The move object is returned containing:   
+**face**: (U, F, L, R, D or B)  
+**amount**: (1, -1, 2, or -2) and  
+**notation**: U2, F and R2, for example.
+
+
+```javascript
+this.giiker.on("move", (move) => {
+    console.log(move);
+});
+```
+
+- **battery**  
+This event is triggered to inform the battery and charging states. In order to receive this event, first you need to call the **getBatteryLevel** function. This function receives a boolean to indicate if you want to continue monitoring or not:  
+```javascript
+// Check battery/charging state just once and stop monitoring it.
+this.giiker.getBatteryLevel(true);
+
+// Check battery/charging state updates 'forever'
+this.giiker.getBatteryLevel(false);
+
+// Call this function if you want to stop monitoring the battery/charging state
+this.giiker.stopBatteryMonitor();
+```
+
+```javascript
+this.giiker.on("battery", (battery) => {
+    console.log(battery.batteryLevel);
+    console.log(battery.chargingState);
+});
+```
+
+- **move count**  
+This event is triggered to inform the the amount of turns was made on the cube. In order to receive this event, first you need to call the **getMoveCount** function. This function receives a boolean to indicate if you want to continue monitoring or not:  
+```javascript
+// Check move count just once and stop monitoring it.
+this.giiker.getMoveCount(true);
+
+// Check move count updates 'forever'
+this.giiker.getMoveCount(false);
+
+// Call this function if you want to stop monitoring the move count updates.
+this.giiker.stopMoveCountMonitor();
+```
+
+```javascript
+this.giiker.on("move count", (count) => {
+    console.log(count);
+});
+```
+
+**Note**: This event is not triggered after every turn on the cube. You need to call the **getMoveCount** function if you want to get move counts instantly.
+
+- **update state**  
+This event is triggered after request Giiker to reset it internal state.
+
+```javascript
+this.giiker.on("update state", () => {
+    console.log(this.giiker.stateString);
+});
+```
