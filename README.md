@@ -1,5 +1,7 @@
 # React Native Giiker
 
+<img width="220px" align="right" src="https://github.com/juniorerico/react-native-giiker/blob/master/example.gif" />
+
 React Native Bluetooth package to connect to Xiaomi Giiker Cube. Tested in android only, but probably works on ios too.
 
 ## Getting Started
